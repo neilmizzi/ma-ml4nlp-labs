@@ -1,7 +1,7 @@
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.svm import SVC
-from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import CategoricalNB
 import pandas as pd
 import sys
 
@@ -66,19 +66,27 @@ def extract_features(inputfile):
     return data
     
 def create_classifier(train_features, train_targets, modelname):
-   
+    print(modelname)
     if modelname ==  'logreg':
         # TIP: you may need to solve this: https://stackoverflow.com/questions/61814494/what-is-this-warning-convergencewarning-lbfgs-failed-to-converge-status-1
         model = LogisticRegression(max_iter=10000)
+        vec = DictVectorizer()
+        features_vectorized = vec.fit_transform(train_features)
+        model.fit(features_vectorized, train_targets)
+
     elif modelname == 'NB':
-        model = GaussianNB(max_iter=10000)
+        #TODO solve errors
+        model = CategoricalNB()
+        vec = DictVectorizer()
+        features_vectorized = vec.fit_transform(train_features)
+        model.partial_fit(features_vectorized, train_targets)
     elif modelname == 'SVM':
         model = SVC(max_iter=10000)
+        vec = DictVectorizer()
+        features_vectorized = vec.fit_transform(train_features)
+        model.fit(features_vectorized, train_targets)
     else:
         raise Exception()
-    vec = DictVectorizer()
-    features_vectorized = vec.fit_transform(train_features)
-    model.fit(features_vectorized, train_targets)
     
     
     return model, vec
@@ -121,8 +129,8 @@ def main(argv=None):
     ## and make sure the path works correctly, or you can add an argument to the commandline that allows users to specify the location of the language model.
     
     training_features, gold_labels = extract_features_and_labels(trainingfile)
-    for modelname in ['logreg', 'NB', 'SVM']:
-        ml_model, vec = create_classifier(training_features, gold_labels, 'logreg')
+    for modelname in ['SVM']:
+        ml_model, vec = create_classifier(training_features, gold_labels, modelname)
         classify_data(ml_model, vec, inputfile, outputfile.replace('.conll','.' + modelname + '.conll'))
     
     
@@ -130,4 +138,4 @@ if __name__ == '__main__':
     main(['python', 
     './data/reuters-train-tab-stripped.en', 
     './data/gold_stripped.conll', 
-    './data/out.txt'])
+    './data/out.conll'])
