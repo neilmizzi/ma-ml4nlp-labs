@@ -2,6 +2,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.svm import SVC
 from sklearn.naive_bayes import MultinomialNB
+import gensim
 import csv
 import pandas as pd
 import sys
@@ -38,7 +39,7 @@ def extract_embeddings_as_features_and_gold(conllfile,word_embedding_model):
     return features, labels
 
 
-def extract_features_and_labels(trainingfile):
+def extract_features_and_labels(trainingfile, added_features):
     
     data = []
     targets = []
@@ -49,13 +50,24 @@ def extract_features_and_labels(trainingfile):
             components = line.rstrip('\n').split()
             if len(components) > 0:
                 token = components[0]
-                feature_dict = {'token':token}
+
+                # added features
+                if added_features:
+                    phrase_cat = components[1]
+                    pos_tag = components[2]
+
+                    feature_dict = {'token': token,
+                                    'cat': phrase_cat,
+                                    'pos_tag': pos_tag}
+                else:
+                    feature_dict = {'token': token}
                 data.append(feature_dict)
                 #gold is in the last column
                 targets.append(components[-1])
     return data, targets
-    
-def extract_features(inputfile):
+
+
+def extract_features(inputfile, added_features):
    
     data = []
     with open(inputfile, 'r', encoding='utf8') as infile:
@@ -63,12 +75,21 @@ def extract_features(inputfile):
             components = line.rstrip('\n').split()
             if len(components) > 0:
                 token = components[0]
-                feature_dict = {'token':token}
+                # added features
+                if added_features:
+                    phrase_cat = components[1]
+                    pos_tag = components[2]
+
+                    feature_dict = {'token': token,
+                                    'cat': phrase_cat,
+                                    'pos_tag': pos_tag}
+                else:
+                    feature_dict = {'token': token}
                 data.append(feature_dict)
     return data
     
-def create_classifier(train_features, train_targets, modelname):
-    print(modelname)
+
+def create_classifier(train_features, train_targets, modelname,):
     if modelname ==  'logreg':
         # TIP: you may need to solve this: https://stackoverflow.com/questions/61814494/what-is-this-warning-convergencewarning-lbfgs-failed-to-converge-status-1
         model = LogisticRegression(max_iter=10000)
@@ -77,14 +98,13 @@ def create_classifier(train_features, train_targets, modelname):
         model.fit(features_vectorized, train_targets)
 
     elif modelname == 'NB':
-        #TODO solve errors
         model = MultinomialNB()
         vec = DictVectorizer()
         features_vectorized = vec.fit_transform(train_features)
         model.fit(features_vectorized, train_targets)
 
     elif modelname == 'SVM':
-        model = SVC(max_iter=10000)
+        model = SVC(max_iter=15000)
         vec = DictVectorizer()
         features_vectorized = vec.fit_transform(train_features)
         model.fit(features_vectorized, train_targets)
@@ -92,13 +112,12 @@ def create_classifier(train_features, train_targets, modelname):
     else:
         raise Exception()
     
-    
     return model, vec
     
     
-def classify_data(model, vec, inputdata, outputfile):
+def classify_data(model, vec, inputdata, outputfile, added_features):
   
-    features = extract_features(inputdata)
+    features = extract_features(inputdata, added_features)
     features = vec.transform(features)
     predictions = model.predict(features)
     outfile = open(outputfile, 'w')
@@ -127,19 +146,36 @@ def main(argv=None):
     trainingfile = argv[1]
     inputfile = argv[2]
     outputfile = argv[3]
+
+    # Set True to run with added features
+    added_features = argv[4]
     
     ## for the word_embedding_model used in the `extract_embeddings_as_features_and_gold' you can either choose to use a statement like this:
-    # language_model = gensim.models.KeyedVectors.load_word2vec_format('../../models/GoogleNews-vectors-negative300.bin.gz', binary=True)
+    language_model = gensim.models.KeyedVectors.load_word2vec_format('./models/GoogleNews-vectors-negative300.bin.gz', binary=True)
     ## and make sure the path works correctly, or you can add an argument to the commandline that allows users to specify the location of the language model.
+
+    if added_features:
+        outputfile = outputfile.replace('.conll','_added_feats.conll')
     
-    training_features, gold_labels = extract_features_and_labels(trainingfile)
-    for modelname in ['logreg','NB','SVM']:
-        ml_model, vec = create_classifier(training_features, gold_labels, modelname)
-        classify_data(ml_model, vec, inputfile, outputfile.replace('.conll','.' + modelname + '.conll'))
+    training_features, gold_labels = extract_features_and_labels(trainingfile, added_features)
+    for modelname in ['word2vec']:
+        print(modelname)
+        if modelname is not 'word2vec':
+            ml_model, vec = create_classifier(training_features, gold_labels, modelname)
+            classify_data(ml_model, vec, inputfile, outputfile.replace('.conll','.' + modelname + '.conll'), added_features)
+        else:
+            pass
     
     
 if __name__ == '__main__':
+    # without added features
     main(['python', 
     './data/reuters-train-tab-stripped.en', 
     './data/gold_stripped.conll', 
-    './data/out.conll'])
+    './data/out.conll', False])
+
+    # with added features
+    main(['python', 
+    './data/reuters-train-tab-stripped.en', 
+    './data/gold_stripped.conll', 
+    './data/out.conll', True])
