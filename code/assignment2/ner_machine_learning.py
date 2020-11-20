@@ -9,12 +9,13 @@ import sys
 
 
 
-def extract_embeddings_as_features_and_gold(conllfile,word_embedding_model):
+def extract_embeddings_as_features_and_gold(conllfile,word_embedding_model, added_features):
     '''
     Function that extracts features and gold labels using word embeddings
     
     :param conllfile: path to conll file
     :param word_embedding_model: a pretrained word embedding model
+    :param added_features: a boolean specifying whether to include new features or not
     :type conllfile: string
     :type word_embedding_model: gensim.models.keyedvectors.Word2VecKeyedVectors
     
@@ -40,7 +41,6 @@ def extract_embeddings_as_features_and_gold(conllfile,word_embedding_model):
 
 
 def extract_features_and_labels(trainingfile, added_features):
-    
     data = []
     targets = []
     # TIP: recall that you can find information on how to integrate features here:
@@ -68,7 +68,6 @@ def extract_features_and_labels(trainingfile, added_features):
 
 
 def extract_features(inputfile, added_features):
-   
     data = []
     with open(inputfile, 'r', encoding='utf8') as infile:
         for line in infile:
@@ -89,9 +88,8 @@ def extract_features(inputfile, added_features):
     return data
     
 
-def create_classifier(train_features, train_targets, modelname):
+def create_classifier(train_features, train_targets, modelname, word_to_vec_en):
     if modelname ==  'logreg':
-        # TIP: you may need to solve this: https://stackoverflow.com/questions/61814494/what-is-this-warning-convergencewarning-lbfgs-failed-to-converge-status-1
         model = LogisticRegression(max_iter=15000)
         vec = DictVectorizer()
         features_vectorized = vec.fit_transform(train_features)
@@ -104,9 +102,14 @@ def create_classifier(train_features, train_targets, modelname):
         model.fit(features_vectorized, train_targets)
 
     elif modelname == 'SVM':
-        model = SVC(max_iter=15000)
-        vec = DictVectorizer()
-        features_vectorized = vec.fit_transform(train_features)
+        model = SVC(max_iter=15)
+        if not word_to_vec_en:
+            vec = DictVectorizer()
+            features_vectorized = vec.fit_transform(train_features)
+        else:
+            vec = train_features
+            features_vectorized = train_features
+
         model.fit(features_vectorized, train_targets)
 
     else:
@@ -115,10 +118,12 @@ def create_classifier(train_features, train_targets, modelname):
     return model, vec
     
     
-def classify_data(model, vec, inputdata, outputfile, added_features):
-  
-    features = extract_features(inputdata, added_features)
-    features = vec.transform(features)
+def classify_data(model, vec, inputdata, outputfile, added_features, word_to_vec_en):
+    if not word_to_vec_en:
+        features = extract_features(inputdata, added_features)
+        features = vec.transform(features)
+    else:
+        features = vec
     predictions = model.predict(features)
     outfile = open(outputfile, 'w')
     counter = 0
@@ -157,36 +162,38 @@ def main(argv=None):
         language_model = gensim.models.KeyedVectors.load_word2vec_format('./models/GoogleNews-vectors-negative300.bin.gz', binary=True)
         print('loading done')
         outputfile = outputfile.replace('.conll','_word2vec.conll')
-        training_features, gold_labels = extract_embeddings_as_features_and_gold(inputfile, language_model)
+        training_features, gold_labels = extract_embeddings_as_features_and_gold(inputfile, language_model, added_features)
+    else:
+        # For now, you can either use word2vec, or added features. Not both.
+        print('Not Using Embeddings')
+        training_features, gold_labels = extract_features_and_labels(trainingfile, added_features)
     ## and make sure the path works correctly, or you can add an argument to the commandline that allows users to specify the location of the language model.
 
     if added_features:
         outputfile = outputfile.replace('.conll','_added_feats.conll')
+        model_list = ['SVM']
+    else:
+        model_list = ['logreg', 'NB', 'SVM']
     
-    training_features, gold_labels = extract_features_and_labels(trainingfile, added_features)
-    for modelname in ['logreg', 'NB', 'SVM']:
+    for modelname in model_list:
         print(modelname)
-        if word_to_vec_en:
-            ml_model, vec = create_classifier(training_features, gold_labels, modelname)
-            classify_data(ml_model, vec, inputfile, outputfile.replace('.conll','.' + modelname + '.conll'), added_features)
-        else:
-            ml_model, vec = create_classifier(training_features, gold_labels, modelname)
-            classify_data(ml_model, vec, inputfile, outputfile.replace('.conll','.' + modelname + '.conll'), added_features)
+        ml_model, vec = create_classifier(training_features, gold_labels, modelname, word_to_vec_en)
+        classify_data(ml_model, vec, inputfile, outputfile.replace('.conll','.' + modelname + '.conll'), added_features, word_to_vec_en)
 
     
     
 if __name__ == '__main__':
-    # # without added features
-    # main(['python', 
-    # './data/reuters-train-tab-stripped.en', 
-    # './data/gold_stripped.conll', 
-    # './data/out.conll', False, False])
+    # without added features
+    main(['python', 
+    './data/reuters-train-tab-stripped.en', 
+    './data/gold_stripped.conll', 
+    './data/out.conll', False, False])
 
-    # # with added features
-    # main(['python', 
-    # './data/reuters-train-tab-stripped.en', 
-    # './data/gold_stripped.conll', 
-    # './data/out.conll', True, False])
+    # with added features
+    main(['python', 
+    './data/reuters-train-tab-stripped.en',
+    './data/gold_stripped.conll', 
+    './data/out.conll', True, False])
     
     # with word embeddings and no added features
     main(['python', 
