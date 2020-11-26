@@ -102,7 +102,7 @@ def create_classifier(train_features, train_targets, modelname, word_to_vec_en):
         model.fit(features_vectorized, train_targets)
 
     elif modelname == 'SVM':
-        model = SVC(max_iter=15)
+        model = SVC(max_iter=15000)
         if not word_to_vec_en:
             vec = DictVectorizer()
             features_vectorized = vec.fit_transform(train_features)
