@@ -40,11 +40,29 @@ def extract_embeddings_as_features_and_gold(conllfile,word_embedding_model, adde
     return features, labels
 
 
+
+def is_capitalised(token):
+    # CASE TOKEN IS FULL CAPS
+    if token.isupper():
+        return 2
+    # Case Token Has First Letter Capitalised
+    elif token[0].isupper():
+        return 1
+    # case token is lowercase
+    else:
+        return 0
+
+
+    # returns previous token, the next token, and level of capitalisation feature
+
+
 def extract_features_and_labels(trainingfile, added_features):
     data = []
     targets = []
     # TIP: recall that you can find information on how to integrate features here:
     # https://scikit-learn.org/stable/modules/feature_extraction.html
+
+    prev_token = '-'
     with open(trainingfile, 'r', encoding='utf8') as infile:
         for line in infile:
             components = line.rstrip('\n').split()
@@ -53,22 +71,28 @@ def extract_features_and_labels(trainingfile, added_features):
 
                 # added features
                 if added_features:
+                    capitalised = is_capitalised(token)
                     phrase_cat = components[1]
                     pos_tag = components[2]
 
                     feature_dict = {'token': token,
                                     'cat': phrase_cat,
-                                    'pos_tag': pos_tag}
+                                    'pos_tag': pos_tag,
+                                    'prev_token': prev_token,
+                                    'capitalised': capitalised}
                 else:
                     feature_dict = {'token': token}
                 data.append(feature_dict)
                 #gold is in the last column
                 targets.append(components[-1])
+                # set previous token for the next iteration
+                prev_token = token
     return data, targets
 
 
 def extract_features(inputfile, added_features):
     data = []
+    prev_token = '-'
     with open(inputfile, 'r', encoding='utf8') as infile:
         for line in infile:
             components = line.rstrip('\n').split()
@@ -76,15 +100,22 @@ def extract_features(inputfile, added_features):
                 token = components[0]
                 # added features
                 if added_features:
+                    
+                    capitalised = is_capitalised(token)
+
                     phrase_cat = components[1]
                     pos_tag = components[2]
 
                     feature_dict = {'token': token,
                                     'cat': phrase_cat,
-                                    'pos_tag': pos_tag}
+                                    'pos_tag': pos_tag,
+                                    'prev_token': prev_token,
+                                    'capitalised': capitalised}
                 else:
                     feature_dict = {'token': token}
                 data.append(feature_dict)
+                # set previous token to current token
+                prev_token = token
     return data
     
 
@@ -136,45 +167,37 @@ def classify_data(model, vec, inputdata, outputfile, added_features, word_to_vec
 
 
 def main(argv=None):
-    
-    #a very basic way for picking up commandline arguments
+    # Get input
     if argv is None:
         argv = sys.argv
-        
-    #Note 1: argv[0] is the name of the python program if you run your program as: python program1.py arg1 arg2 arg3
-    #Note 2: sys.argv is simple, but gets messy if you need it for anything else than basic scenarios with few arguments
-    #you'll want to move to something better. e.g. argparse (easy to find online)
-    
-    
-    #you can replace the values for these with paths to the appropriate files for now, e.g. by specifying values in argv
-    #argv = ['mypython_program','','','']
     trainingfile = argv[1]
     inputfile = argv[2]
     outputfile = argv[3]
 
-    # Set True to run with added features
+    # Set True to run with added features in args
     added_features = argv[4]
     word_to_vec_en = argv[5]
     
-    ## for the word_embedding_model used in the `extract_embeddings_as_features_and_gold' you can either choose to use a statement like this:
+    # Case we use word embeddings
     if word_to_vec_en:
         print('loading embeddings')
         language_model = gensim.models.KeyedVectors.load_word2vec_format('./models/GoogleNews-vectors-negative300.bin.gz', binary=True)
         print('loading done')
         outputfile = outputfile.replace('.conll','_word2vec.conll')
-        training_features, gold_labels = extract_embeddings_as_features_and_gold(inputfile, language_model, added_features)
+        model_list = ['SVM']
+        training_features, gold_labels = extract_embeddings_as_features_and_gold(trainingfile, language_model, added_features)
+    
+    # If we don't, we run all models and extract the normal features
     else:
-        # For now, you can either use word2vec, or added features. Not both.
         print('Not Using Embeddings')
         training_features, gold_labels = extract_features_and_labels(trainingfile, added_features)
-    ## and make sure the path works correctly, or you can add an argument to the commandline that allows users to specify the location of the language model.
-
-    if added_features:
-        outputfile = outputfile.replace('.conll','_added_feats.conll')
-        model_list = ['SVM']
-    else:
         model_list = ['logreg', 'NB', 'SVM']
-    
+
+    # If we have added features, we adjust the name accordingly
+    if added_features:
+        print("using extra features")
+        outputfile = outputfile.replace('.conll','_added_feats.conll')
+
     for modelname in model_list:
         print(modelname)
         ml_model, vec = create_classifier(training_features, gold_labels, modelname, word_to_vec_en)
@@ -184,10 +207,10 @@ def main(argv=None):
     
 if __name__ == '__main__':
     # without added features
-    main(['python', 
-    './data/reuters-train-tab-stripped.en', 
-    './data/gold_stripped.conll', 
-    './data/out.conll', False, False])
+    # main(['python', 
+    # './data/reuters-train-tab-stripped.en', 
+    # './data/gold_stripped.conll', 
+    # './data/out.conll', False, False])
 
     # with added features
     main(['python', 
@@ -196,7 +219,7 @@ if __name__ == '__main__':
     './data/out.conll', True, False])
     
     # with word embeddings and no added features
-    main(['python', 
-    './data/reuters-train-tab-stripped.en', 
-    './data/gold_stripped.conll', 
-    './data/out.conll', False, True])
+    # main(['python', 
+    # './data/reuters-train-tab-stripped.en', 
+    # './data/gold_stripped.conll', 
+    # './data/out.conll', False, True])
