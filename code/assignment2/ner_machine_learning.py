@@ -39,20 +39,6 @@ def extract_embeddings_as_features_and_gold(conllfile,word_embedding_model, adde
             labels.append(row[-1])
     return features, labels
 
-
-
-def is_capitalised(token):
-    # CASE TOKEN IS FULL CAPS
-    if token.isupper():
-        return 2
-    # Case Token Has First Letter Capitalised
-    elif token[0].isupper():
-        return 1
-    # case token is lowercase
-    else:
-        return 0
-
-
     # returns previous token, the next token, and level of capitalisation feature
 
 
@@ -62,37 +48,37 @@ def extract_features_and_labels(trainingfile, added_features):
     # TIP: recall that you can find information on how to integrate features here:
     # https://scikit-learn.org/stable/modules/feature_extraction.html
 
-    prev_token = '-'
     with open(trainingfile, 'r', encoding='utf8') as infile:
         for line in infile:
             components = line.rstrip('\n').split()
             if len(components) > 0:
                 token = components[0]
-
                 # added features
                 if added_features:
-                    capitalised = is_capitalised(token)
                     phrase_cat = components[1]
                     pos_tag = components[2]
+                    prev_token = components[3]
+                    next_token = components[4]
+                    caps_all = components[5]
+                    caps_first = components[6]
 
                     feature_dict = {'token': token,
                                     'cat': phrase_cat,
                                     'pos_tag': pos_tag,
                                     'prev_token': prev_token,
-                                    'capitalised': capitalised}
+                                    'next_token': next_token,
+                                    'caps_all': caps_all,
+                                    'caps_first': caps_first}
                 else:
                     feature_dict = {'token': token}
                 data.append(feature_dict)
                 #gold is in the last column
                 targets.append(components[-1])
-                # set previous token for the next iteration
-                prev_token = token
     return data, targets
 
 
 def extract_features(inputfile, added_features):
     data = []
-    prev_token = '-'
     with open(inputfile, 'r', encoding='utf8') as infile:
         for line in infile:
             components = line.rstrip('\n').split()
@@ -100,22 +86,23 @@ def extract_features(inputfile, added_features):
                 token = components[0]
                 # added features
                 if added_features:
-                    
-                    capitalised = is_capitalised(token)
-
                     phrase_cat = components[1]
                     pos_tag = components[2]
+                    prev_token = components[3]
+                    next_token = components[4]
+                    caps_all = components[5]
+                    caps_first = components[6]
 
                     feature_dict = {'token': token,
                                     'cat': phrase_cat,
                                     'pos_tag': pos_tag,
                                     'prev_token': prev_token,
-                                    'capitalised': capitalised}
+                                    'next_token': next_token,
+                                    'caps_all': caps_all,
+                                    'caps_first': caps_first}
                 else:
                     feature_dict = {'token': token}
                 data.append(feature_dict)
-                # set previous token to current token
-                prev_token = token
     return data
     
 
@@ -171,7 +158,7 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv
     trainingfile = argv[1]
-    inputfile = argv[2]
+    testfile = argv[2]
     outputfile = argv[3]
 
     # Set True to run with added features in args
@@ -201,7 +188,7 @@ def main(argv=None):
     for modelname in model_list:
         print(modelname)
         ml_model, vec = create_classifier(training_features, gold_labels, modelname, word_to_vec_en)
-        classify_data(ml_model, vec, inputfile, outputfile.replace('.conll','.' + modelname + '.conll'), added_features, word_to_vec_en)
+        classify_data(ml_model, vec, testfile, outputfile.replace('.conll','.' + modelname + '.conll'), added_features, word_to_vec_en)
 
     
     
