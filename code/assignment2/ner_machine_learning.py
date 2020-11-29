@@ -9,7 +9,7 @@ import sys
 
 
 
-def extract_embeddings_as_features_and_gold(conllfile,word_embedding_model, added_features):
+def extract_embeddings_as_features_and_gold(conllfile, word_embedding_model, added_features):
     '''
     Function that extracts features and gold labels using word embeddings
     
@@ -22,7 +22,6 @@ def extract_embeddings_as_features_and_gold(conllfile,word_embedding_model, adde
     :return features: list of vector representation of tokens
     :return labels: list of gold labels
     '''
-    ### This code was partially inspired by code included in the HLT course, obtained from https://github.com/cltl/ma-hlt-labs/, accessed in May 2020.
     labels = []
     features = []
     
@@ -39,15 +38,10 @@ def extract_embeddings_as_features_and_gold(conllfile,word_embedding_model, adde
             labels.append(row[-1])
     return features, labels
 
-    # returns previous token, the next token, and level of capitalisation feature
-
 
 def extract_features_and_labels(trainingfile, added_features):
     data = []
     targets = []
-    # TIP: recall that you can find information on how to integrate features here:
-    # https://scikit-learn.org/stable/modules/feature_extraction.html
-
     with open(trainingfile, 'r', encoding='utf8') as infile:
         for line in infile:
             components = line.rstrip('\n').split()
@@ -104,27 +98,29 @@ def extract_features(inputfile, added_features):
                     feature_dict = {'token': token}
                 data.append(feature_dict)
     return data
-    
+
+
+def vec_feats(feats):
+    vec = DictVectorizer()
+    return vec.fit_transform(feats)
 
 def create_classifier(train_features, train_targets, modelname, word_to_vec_en):
     if modelname ==  'logreg':
         model = LogisticRegression(max_iter=15000)
-        vec = DictVectorizer()
-        features_vectorized = vec.fit_transform(train_features)
+        features_vectorized = vec_feats(train_features)
         model.fit(features_vectorized, train_targets)
 
     elif modelname == 'NB':
         model = MultinomialNB()
-        vec = DictVectorizer()
-        features_vectorized = vec.fit_transform(train_features)
+        features_vectorized = vec_feats(train_features)
         model.fit(features_vectorized, train_targets)
 
     elif modelname == 'SVM':
         model = SVC(max_iter=15000)
         if not word_to_vec_en:
-            vec = DictVectorizer()
-            features_vectorized = vec.fit_transform(train_features)
+            features_vectorized = vec_feats(train_features)
         else:
+            features_vectorized = vec_feats(train_features)
             vec = train_features
             features_vectorized = train_features
 
