@@ -13,8 +13,8 @@ def part1():
     vec_feats = ner.get_feat_vect(True, sel_feats)
 
     # Train on all models and get results
-    for model in ['SVM', 'NB', 'LR']:
-        model = ner.create_classifier(vec_feats, 'SVM')
+    for model in ['NB', 'LR', 'SVM']:
+        model = ner.create_classifier(vec_feats, model)
         predictions = ner.set_predictions(model, sel_feats)
         ner.get_prediction_summary(predictions)
 
@@ -32,8 +32,8 @@ def part2():
     vec_feats = ner.get_feat_vect(True, sel_feats)
 
     # Train on all models and get results
-    for model in ['SVM', 'NB', 'LR']:
-        model = ner.create_classifier(vec_feats, 'SVM')
+    for model in ['NB', 'LR', 'SVM']:
+        model = ner.create_classifier(vec_feats, model)
         predictions = ner.set_predictions(model, sel_feats)
         ner.get_prediction_summary(predictions)
 
