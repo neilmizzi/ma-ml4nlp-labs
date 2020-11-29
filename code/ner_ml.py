@@ -13,6 +13,7 @@ from eval import compare_outcome, get_macro_score
 
 class NERML:
     # INIT Module
+    # 
     # takes train & test dirs and loads DataFrames
     # Also takes boolean, typeset to False, determining whether to load embeddings or not
     # 
@@ -108,7 +109,7 @@ class NERML:
         return feats
 
 
-    # Creates a classifier, specified by model_name. Can be LR, NB or SVM
+    # Creates and Returns a trained model, specified by model_name. Can be LR, NB or SVM
     def create_classifier(self, feats, model_name:str) -> any:
         print(f"Training {model_name}...")
         targets = self.train_file['NERLabel'].to_list()
@@ -121,11 +122,10 @@ class NERML:
             model.fit(feats, targets)
 
         elif model_name == 'SVM':
-            # Make sure iter is set correctly
             model = SVC(max_iter=self.iter_lim)
             model.fit(feats, targets)
         else:
-            raise Exception()
+            raise ValueError("Model is not known, or not implemented")
         return model
 
 
@@ -141,6 +141,6 @@ class NERML:
         return get_macro_score(predictions, self.test_file['NERLabel'].to_list())
 
 
-    # Provides Confusion Matrix
+    # Provides Confusion Matrix and class-by-class scores
     def get_prediction_summary(self, predictions) -> None:
         compare_outcome(predictions, self.test_file['NERLabel'].to_list())
