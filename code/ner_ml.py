@@ -93,6 +93,13 @@ class NERML:
     
     # Returns Vectorised Dict Feats for either Train or Test
     def get_feat_vect(self, is_train:bool, selected_features:list) -> any:
+        # If embeddings are going to be used, remove token and PrevToken
+        if self.embeddings_loaded:
+            if 'token' in selected_features:
+                selected_features.remove('token')
+            if 'PrevToken' in selected_features:
+                selected_features.remove('PrevToken')
+        
         df = self.train_or_test_getter(is_train)
         dict_feats = []
         for i in range(df.shape[0]):
@@ -106,12 +113,12 @@ class NERML:
         if self.embeddings_loaded:
             combined_vectors = []
             feats = np.array(feats.toarray())
-            # Future fix: Add var which specifies which variables will have word embeddings (if enabled)
+            # Future fix: Add var which specifies which features will be word embeddings (if enabled)
             embeddings_token = self.get_embeddings(is_train, feat='token')
-            embeddings_nextTok = self.get_embeddings(is_train, feat='PrevToken')
+            embeddings_prevTok = self.get_embeddings(is_train, feat='PrevToken')
             for i, vector in enumerate(feats):
-                combined_vector = np.concatenate((vector,embeddings_token[i]))
-                combined_vector = np.concatenate(combined_vector, embeddings_nextTok[i])
+                combined_vector = np.concatenate((vector, embeddings_token[i]))
+                combined_vector = np.concatenate((combined_vector, embeddings_prevTok[i]))
                 combined_vectors.append(combined_vector)
             feats = combined_vectors
         return feats
