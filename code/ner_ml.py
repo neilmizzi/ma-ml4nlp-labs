@@ -11,6 +11,7 @@ import numpy as np
 import sys
 from eval import compare_outcome, get_macro_score
 
+
 class NERML:
     # INIT Module
     # 
@@ -19,8 +20,9 @@ class NERML:
     # 
     # Sets train and test DFs, loads Vectoriser, and loads word embeddings (if enabled)
     def __init__(self, train: str, test: str, load_embeddings: bool=False, iter_lim:int = 15000):
-        # Set Iteration Limit to be used by SVM & NB
+        # Set Iteration Limit to be used by SVM & NB (and possibly other models that need early stopping)
         self.iter_lim = iter_lim
+
         # List of all features loaded
         self.feature_list = ['token', 'ChunkLabel', 'POS-Tag', 'PrevToken', 
         'NextToken', 'FULLCAPS', 'FirstCaps', 'NERLabel']
@@ -44,6 +46,9 @@ class NERML:
         # This process takes its time if set to true
         self.embeddings_loaded : bool = False
         if load_embeddings:
+            # Possible future update: Make this snippet a separate function
+            # Allowing us to load the word embeddings after initialisation of NER class
+            # But also retaining the option of doing it within the init process
             print('loading embeddings')
             self.language_model = gensim.models.KeyedVectors.load_word2vec_format('./models/GoogleNews-vectors-negative300.bin.gz', binary=True)
             print('loading done')
