@@ -61,11 +61,11 @@ class NERML:
 
 
     # Sets the vectorised embeddings to the DF
-    def set_embeddings(self, is_train:bool) -> None:
+    def set_embeddings(self, is_train:bool, feat:str) -> None:
         if self.embeddings_loaded:
             features = []
             df = self.train_or_test_getter(is_train)
-            tokens = df['token'].to_list()
+            tokens = df[feat].to_list()
 
             # code obtained from provided files
             for token in tokens:
@@ -75,20 +75,20 @@ class NERML:
                     vector = [0]*300
                 features.append(vector)
             if is_train:
-                self.train_file['embeddings_token'] = features
+                self.train_file['embeddings_'+feat] = features
             else:
-                self.test_file['embeddings_token'] = features 
+                self.test_file['embeddings_'+feat] = features 
         else:
             raise FileNotFoundError("Embeddings not Loaded!")
     
 
     # Get Embeddings as list
-    def get_embeddings(self, is_train:bool) -> list:
-        self.set_embeddings(is_train)
+    def get_embeddings(self, is_train:bool, feat:str) -> list:
+        self.set_embeddings(is_train, feat)
         if is_train:
-            return self.train_file['embeddings_token'].to_list()
+            return self.train_file['embeddings_'+feat].to_list()
         else:
-            return self.test_file['embeddings_token'].to_list()
+            return self.test_file['embeddings_'+feat].to_list()
     
     
     # Returns Vectorised Dict Feats for either Train or Test
@@ -105,10 +105,13 @@ class NERML:
         # add word embeddings to feature set if they are loaded
         if self.embeddings_loaded:
             combined_vectors = []
-            feats = np.array(feats)
-            embeddings = self.get_embeddings(is_train)
-            for index, vector in enumerate(embeddings):
-                combined_vector = np.concatenate((vector,embeddings[index]))
+            feats = np.array(feats.toarray())
+            # Future fix: Add var which specifies which variables will have word embeddings (if enabled)
+            embeddings_token = self.get_embeddings(is_train, feat='token')
+            embeddings_nextTok = self.get_embeddings(is_train, feat='PrevToken')
+            for i, vector in enumerate(feats):
+                combined_vector = np.concatenate((vector,embeddings_token[i]))
+                combined_vector = np.concatenate(combined_vector, embeddings_nextTok[i])
                 combined_vectors.append(combined_vector)
             feats = combined_vectors
         return feats

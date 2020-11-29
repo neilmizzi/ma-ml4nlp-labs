@@ -50,16 +50,15 @@ def part3():
     # Get Vectorised features
     vec_feats = ner.get_feat_vect(True, sel_feats)
 
-    # Train on all models and get results
-    for model in ['SVM', 'NB', 'LR']:
-        model = ner.create_classifier(vec_feats, 'SVM')
-        predictions = ner.set_predictions(model, sel_feats)
-        ner.get_prediction_summary(predictions)
+    # Train on SVM only and get results
+    model = ner.create_classifier(vec_feats, 'SVM')
+    predictions = ner.set_predictions(model, sel_feats)
+    ner.get_prediction_summary(predictions)
 
 
 # Running Assignment 2 Stuff
 if __name__ == "__main__":
-    part_to_run = 1
+    part_to_run = 3
     
     if part_to_run == 1:
         # Part 1
