@@ -45,7 +45,7 @@ def part3():
     './data/gold_stripped.conll', load_embeddings=True)
 
     # Selection of all features
-    sel_feats = ['token', 'ChunkLabel', 'POS-Tag', 'PrevToken', 'NextToken', 'FULLCAPS', 'FirstCaps']
+    sel_feats = ['token', 'ChunkLabel', 'POS-Tag', 'PrevToken', 'FULLCAPS', 'FirstCaps']
 
     # Get Vectorised features
     vec_feats = ner.get_feat_vect(True, sel_feats)
