@@ -97,7 +97,13 @@ class NERML:
 
         # add word embeddings to feature set if they are loaded
         if self.embeddings_loaded:
-            raise NotImplementedError()
+            combined_vectors = []
+            feats = np.array(feats)
+            embeddings = self.get_embeddings(is_train)
+            for index, vector in enumerate(embeddings):
+                combined_vector = np.concatenate((vector,embeddings[index]))
+                combined_vectors.append(combined_vector)
+            feats = combined_vectors
         return feats
 
 
@@ -114,7 +120,8 @@ class NERML:
             model.fit(feats, targets)
 
         elif model_name == 'SVM':
-            model = SVC(max_iter=15000)
+            # Make sure iter is set correctly
+            model = SVC(max_iter=100)
             model.fit(feats, targets)
         else:
             raise Exception()
@@ -142,7 +149,7 @@ if __name__ == "__main__":
 
     # Create NER Instance
     ner = NERML('./data/reuters-train-tab-stripped.en',
-    './data/gold_stripped.conll', False)
+    './data/gold_stripped.conll', True)
 
     sel_feats = ['token', 'ChunkLabel', 'POS-Tag', 'PrevToken', 'NextToken', 'FULLCAPS', 'FirstCaps']
 
@@ -150,7 +157,7 @@ if __name__ == "__main__":
     vec_feats = ner.get_feat_vect(True, sel_feats)
 
     # Train using model
-    model = ner.create_classifier(vec_feats, 'NB')
+    model = ner.create_classifier(vec_feats, 'SVM')
     predictions = ner.set_predictions(model, sel_feats)
     ner.get_prediction_summary(predictions)
     print(ner.get_performance(predictions))
