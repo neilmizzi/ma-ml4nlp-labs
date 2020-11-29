@@ -17,8 +17,9 @@ class NERML:
     # Also takes boolean, typeset to False, determining whether to load embeddings or not
     # 
     # Sets train and test DFs, loads Vectoriser, and loads word embeddings (if enabled)
-    def __init__(self, train: str, test: str, load_embeddings: bool=False):
-
+    def __init__(self, train: str, test: str, load_embeddings: bool=False, iter_lim:int = 15000):
+        # Set Iteration Limit to be used by SVM & NB
+        self.iter_lim = iter_lim
         # List of all features loaded
         self.feature_list = ['token', 'ChunkLabel', 'POS-Tag', 'PrevToken', 
         'NextToken', 'FULLCAPS', 'FirstCaps', 'NERLabel']
@@ -112,7 +113,7 @@ class NERML:
         print(f"Training {model_name}...")
         targets = self.train_file['NERLabel'].to_list()
         if model_name ==  'LR':
-            model = LogisticRegression(max_iter=15000)
+            model = LogisticRegression(max_iter=self.iter_lim)
             model.fit(feats, targets)
 
         elif model_name == 'NB':
@@ -121,7 +122,7 @@ class NERML:
 
         elif model_name == 'SVM':
             # Make sure iter is set correctly
-            model = SVC(max_iter=100)
+            model = SVC(max_iter=self.iter_lim)
             model.fit(feats, targets)
         else:
             raise Exception()
@@ -143,21 +144,3 @@ class NERML:
     # Provides Confusion Matrix
     def get_prediction_summary(self, predictions) -> None:
         compare_outcome(predictions, self.test_file['NERLabel'].to_list())
-
-
-if __name__ == "__main__":
-
-    # Create NER Instance
-    ner = NERML('./data/reuters-train-tab-stripped.en',
-    './data/gold_stripped.conll', True)
-
-    sel_feats = ['token', 'ChunkLabel', 'POS-Tag', 'PrevToken', 'NextToken', 'FULLCAPS', 'FirstCaps']
-
-    # Get Vectorised features
-    vec_feats = ner.get_feat_vect(True, sel_feats)
-
-    # Train using model
-    model = ner.create_classifier(vec_feats, 'SVM')
-    predictions = ner.set_predictions(model, sel_feats)
-    ner.get_prediction_summary(predictions)
-    print(ner.get_performance(predictions))
