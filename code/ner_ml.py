@@ -19,7 +19,7 @@ class NERML:
     # Also takes boolean, typeset to False, determining whether to load embeddings or not
     # 
     # Sets train and test DFs, loads Vectoriser, and loads word embeddings (if enabled)
-    def __init__(self, train: str, test: str, load_embeddings: bool=False, iter_lim:int = 15000):
+    def __init__(self, train: str, test: str, load_embeddings: bool=False, iter_lim:int = 15000) -> None:
         # Set Iteration Limit to be used by SVM & NB (and possibly other models that need early stopping)
         self.iter_lim = iter_lim
 
