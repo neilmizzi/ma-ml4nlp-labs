@@ -26,7 +26,7 @@ def part2():
     './data/gold_stripped.conll', load_embeddings=False)
 
     # Selection of all features
-    sel_feats = ['token', 'ChunkLabel', 'POS-Tag', 'PrevToken', 'NextToken', 'FULLCAPS', 'FirstCaps']
+    sel_feats = ['token', 'ChunkLabel', 'POS-Tag', 'PrevToken', 'FULLCAPS', 'FirstCaps']
 
     # Get Vectorised features
     vec_feats = ner.get_feat_vect(True, sel_feats)
@@ -39,7 +39,7 @@ def part2():
 
 
 def part3():
-    print("Running Part 3: All features + Word Embeddings Included")
+    print("Running Part 3: All features + Word Embeddings")
     # Create NER Instance
     ner = NERML('./data/reuters-train-tab-stripped.en',
     './data/gold_stripped.conll', load_embeddings=True)
@@ -58,7 +58,7 @@ def part3():
 
 # Running Assignment 2 Stuff
 if __name__ == "__main__":
-    part_to_run = 3
+    part_to_run = 2
     
     if part_to_run == 1:
         # Part 1
