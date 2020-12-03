@@ -1,10 +1,10 @@
+#NER_ML.py
 import pandas as pd
 from pandas import DataFrame
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.svm import SVC
 from sklearn.naive_bayes import MultinomialNB
-import gensim
 import csv
 import pandas as pd
 import numpy as np
@@ -123,7 +123,7 @@ class NERML:
             combined_vectors = []
 
             # Vectorise features
-            feats = np.array(feats.toarray()) if feats else np.empty([df.shape[0], 0])
+            feats = np.array(feats.toarray()) if feats != [] else np.empty([df.shape[0], 0])
 
             # Future fix: Add var which specifies which features will be word embeddings (if enabled)
 
@@ -140,6 +140,7 @@ class NERML:
                     # If it's 0, this indicates we have no vectorised features (i.e. no basic features)
                     if feats.shape[1] != 0:
                         combined_vector = np.concatenate((vector, embeddings_token[i]))
+                        combined_vector = np.array([combined_vector])
                     else:
                         flag_token_only = True
                         combined_vector = np.array([embeddings_token[i]])
@@ -150,6 +151,7 @@ class NERML:
                     # If combined_vector still is empty, then we have no features (yet)
                     # And our only feature will be PrevToken word embeddings
                     # Else, combine with whatever we have.
+                    print(combined_vector.shape)
                     if combined_vector.shape[1] != 0:
                         flag_token_only = False
                         combined_vector = np.concatenate((combined_vector[0], embeddings_prevTok[i]))
