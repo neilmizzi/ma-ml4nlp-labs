@@ -1,6 +1,8 @@
 from ner_ml import NERML
+import gensim
+import sys
 
-def part1():
+def part1(train, test):
     print("Running Part 1: Token only feature")
     # Create NER Instance
     ner = NERML('./data/reuters-train-tab-stripped.en',
@@ -19,7 +21,7 @@ def part1():
         ner.get_prediction_summary(predictions)
 
 
-def part2():
+def part2(train, test):
     print("Running Part 2: All features Included")
     # Create NER Instance
     ner = NERML('./data/reuters-train-tab-stripped.en',
@@ -38,11 +40,16 @@ def part2():
         ner.get_prediction_summary(predictions)
 
 
-def part3():
+def part3(train, test):
     print("Running Part 3: All features + Word Embeddings")
+
+    print('loading embeddings')
+    model = gensim.models.KeyedVectors.load_word2vec_format('./models/GoogleNews-vectors-negative300.bin.gz', binary=True)
+    print('loading done')
+
     # Create NER Instance
     ner = NERML('./data/reuters-train-tab-stripped.en',
-    './data/gold_stripped.conll', load_embeddings=True)
+    './data/gold_stripped.conll', load_embeddings=model)
 
     # Selection of all features
     sel_feats = ['token', 'ChunkLabel', 'POS-Tag', 'PrevToken', 'FULLCAPS', 'FirstCaps']
@@ -58,17 +65,19 @@ def part3():
 
 # Running Assignment 2 Stuff
 if __name__ == "__main__":
-    part_to_run = 2
+    part_to_run = float(sys.argv[1])
+    train_path = sys.argv[2]
+    test_path = sys.argv[3]
     
     if part_to_run == 1:
         # Part 1
         # All Models, without new features or embeddings
-        part1()
+        part1(train_path, test_path)
     elif part_to_run == 2:
         # Part 2
         # Model without embeddings, but with added features
-        part2()
+        part2(train_path, test_path)
     elif part_to_run == 3:
         # Part 3
         # Embeddings also included
-        part3()
+        part3(train_path, test_path)

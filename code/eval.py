@@ -25,7 +25,8 @@ def obtain_counts(goldannotations, machineannotations):
     for i in range(len(goldannotations)):
         evaluation_counts[goldannotations[i]][machineannotations[i]] += 1
     return evaluation_counts
-    
+
+
 def calculate_precision_recall_fscore(evaluation_counts):
     '''
     Calculate precision recall and fscore for each class and return them in a dictionary
@@ -85,7 +86,8 @@ def calculate_precision_recall_fscore(evaluation_counts):
     value_dict['macro']['f-score'] = sum(macro_list_fscore) / float(macro_count)
 
     return value_dict
-            
+
+           
 def provide_confusion_matrix(evaluation_counts):
     '''
     Read in the evaluation counts and provide a confusion matrix for each class

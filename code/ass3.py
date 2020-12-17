@@ -1,11 +1,8 @@
 from ner_ml import NERML
+import sys
 from itertools import compress, product
 import pandas as pd
 import gensim
-
-print('loading embeddings')
-model = gensim.models.KeyedVectors.load_word2vec_format('D:/Projects/ma-ml4nlp-labs//models/GoogleNews-vectors-negative300.bin.gz', binary=True)
-print('loading done')
 
 
 # obtained from https://stackoverflow.com/a/6542458/5161292
@@ -14,11 +11,9 @@ def combinations(items):
     return [list(x) for x in sub_list]
 
 
-def part1():
+def part1(train_path, test_path, model):
     # Create NER Instance
-    ner = NERML('D:/Projects/ma-ml4nlp-labs/data/reuters-train-tab-stripped.en', 
-                'D:/Projects/ma-ml4nlp-labs/data/gold_stripped.conll', 
-                load_embeddings=model)
+    ner = NERML(train_path, test_path, load_embeddings=model)
     print("Running Part 1: Ablation Analysis")
     print("Running extensive tests on one system")
 
@@ -54,11 +49,10 @@ def part1():
     results.to_csv('D:/Projects/ma-ml4nlp-labs/data/ass3_results_ablanal_deep.csv', sep='\t')
 
 
-def part2():
+def part2(train_path, test_path, model):
     # Create NER Instance
-    ner = NERML('D:/Projects/ma-ml4nlp-labs/data/reuters-train-tab-stripped.en', 'D:/Projects/ma-ml4nlp-labs/data/gold_stripped.conll', lan_model, iter_lim=10000)
-    print("Running Part 1: Ablation Analysis")
-    print("Running extensive tests on one system")
+    ner = NERML(train_path, test_path, load_embeddings=model)
+    print("Running part 2: extensive tests on one system")
 
     # Selection of all features
     sel_feats = ['token', 'ChunkLabel', 'POS-Tag', 'PrevToken', 'FULLCAPS', 'FirstCaps']
@@ -100,8 +94,15 @@ def part2():
 
 
 if __name__ == "__main__":
-    part_to_run = 1
+    part_to_run = float(sys.argv[1])
+    train_path = sys.argv[2]
+    test_path = sys.argv[3]
+
+    print('loading embeddings')
+    model = gensim.models.KeyedVectors.load_word2vec_format('./models/GoogleNews-vectors-negative300.bin.gz', binary=True)
+    print('loading done')
+
     if part_to_run == 1:
-        part1()
+        part1(train_path, test_path, model)
     elif part_to_run == 2:
-        part2()
+        part2(train_path, test_path, model)
