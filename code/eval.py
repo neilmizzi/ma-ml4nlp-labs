@@ -105,23 +105,6 @@ def provide_confusion_matrix(evaluation_counts):
     print(res)
     print(res.to_latex())
 
-def carry_out_evaluation(gold_annotations, systemfile, systemcolumn, delimiter='\t'):
-    '''
-    Carries out the evaluation process (from input file to calculating relevant scores)
-    
-    :param gold_annotations: list of gold annotations
-    :param systemfile: path to file with system output
-    :param systemcolumn: indication of column with relevant information
-    :param delimiter: specification of formatting of file (default delimiter set to '\t')
-    
-    returns evaluation information for this specific system
-    '''
-    system_annotations = extract_annotations(systemfile, systemcolumn, delimiter)
-    evaluation_counts = obtain_counts(gold_annotations, system_annotations)
-    provide_confusion_matrix(evaluation_counts)
-    evaluation_outcome = calculate_precision_recall_fscore(evaluation_counts)
-    
-    return evaluation_outcome
 
 def provide_output_tables(evaluations):
     '''
@@ -137,26 +120,6 @@ def provide_output_tables(evaluations):
     print(evaluations_pddf)
     print(evaluations_pddf.to_latex())
 
-def run_evaluations(goldfile, goldcolumn, systems):
-    '''
-    Carry out standard evaluation for one or more system outputs
-    
-    :param goldfile: path to file with goldstandard
-    :param goldcolumn: indicator of column in gold file where gold labels can be found
-    :param systems: required information to find and process system output
-    :type goldfile: string
-    :type goldcolumn: integer
-    :type systems: list (providing file name, information on tab with system output and system name for each element)
-    
-    :returns the evaluations for all systems
-    '''
-    evaluations = {}
-    #not specifying delimiters here, since it corresponds to the default ('\t')
-    gold_annotations = extract_annotations(goldfile, goldcolumn)
-    for system in systems:
-        sys_evaluation = carry_out_evaluation(gold_annotations, system[0], system[1])
-        evaluations[system[2]] = sys_evaluation
-    return evaluations
 
 def get_macro_score(list_1, list_2):
     evaluation_counts = obtain_counts(list_1, list_2)
